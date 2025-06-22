@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة اختبار | أخلاقيات عصر المعلومات</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&display=swap');
+
+        :root {
+            --bg-color: #1a1a2e;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --primary-glow: rgba(231, 76, 60, 0.5);
+            --secondary-glow: rgba(46, 204, 113, 0.5);
+            --text-color: #e0e0e0;
+            --text-muted: #a0a0c0;
+            --accent-color: #e94560;
+            --correct-color: #2ecc71;
+            --wrong-color: #e74c3c;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Almarai', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            perspective: 1000px;
+            overflow: hidden;
+        }
+
+        .background-blobs {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.6;
+        }
+
+        .blob1 {
+            width: 400px;
+            height: 400px;
+            background: var(--primary-glow);
+            top: -150px;
+            left: -150px;
+            animation: moveBlob1 25s infinite alternate;
+        }
+
+        .blob2 {
+            width: 300px;
+            height: 300px;
+            background: var(--secondary-glow);
+            bottom: -100px;
+            right: -100px;
+            animation: moveBlob2 20s infinite alternate;
+        }
+        
+        @keyframes moveBlob1 {
+            from { transform: translate(-20%, 20%) scale(1.2); }
+            to { transform: translate(20%, -20%) scale(0.8); }
+        }
+        @keyframes moveBlob2 {
+            from { transform: translate(15%, -15%) scale(0.7); }
+            to { transform: translate(-15%, 15%) scale(1.1); }
+        }
+
+        #app {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(15px);
+            padding: 40px;
+            transform-style: preserve-3d;
+            transition: transform 0.5s ease-out;
+        }
+
+        .screen {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { font-size: 2.5rem; font-weight: 800; color: #fff; }
+        .header p { font-size: 1.1rem; color: var(--text-muted); }
+
+        .btn {
+            background: linear-gradient(90deg, var(--accent-color), #f7b733);
+            color: white;
+            border: none;
+            padding: 15px 35px;
+            font-size: 1.2rem;
+            font-family: 'Almarai', sans-serif;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(233, 69, 96, 0.3);
+            display: inline-block;
+        }
+        .btn:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 8px 25px rgba(233, 69, 96, 0.4); }
+        .btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        
+        /* شاشة السؤال */
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background-color: rgba(0,0,0,0.2);
+            border-radius: 4px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, var(--accent-color), #f7b733);
+            transition: width 0.4s ease-in-out;
+        }
+
+        .question-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        .question-topic {
+            background: rgba(255,255,255,0.1);
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+        .question-text {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .options-list { list-style: none; }
+        .option-item {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .option-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        .option-item.selected { background: rgba(233, 69, 96, 0.2); border-color: var(--accent-color); }
+        .option-item.correct { background: rgba(46, 204, 113, 0.2); border-color: var(--correct-color); }
+        .option-item.wrong { background: rgba(231, 76, 60, 0.2); border-color: var(--wrong-color); }
+        .option-feedback-icon { font-size: 1.5rem; }
+
+        .short-answer-display {
+            background: rgba(0,0,0,0.2);
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+        .short-answer-display h4 { color: var(--accent-color); margin-bottom: 10px; }
+
+        .controls { text-align: center; margin-top: 30px; }
+
+        /* شاشة النتائج */
+        .results-summary { text-align: center; }
+        .results-summary h2 { font-size: 2.8rem; font-weight: 800; color: #fff; margin-bottom: 10px; }
+        .results-summary .score-text { font-size: 1.5rem; color: var(--accent-color); margin-bottom: 15px; }
+        .results-summary .feedback-text { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 30px; }
+        
+        .review-btn {
+            background: none;
+            border: 2px solid var(--accent-color);
+            margin-right: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="background-blobs">
+        <div class="blob blob1"></div>
+        <div class="blob blob2"></div>
+    </div>
+    
+    <div id="app">
+        </div>
+
+    <script id="questions-data" type="application/json">
+        {
+            "questions": [
+                { "type": "short_answer", "question": "What was the significance of Blaise Pascal’s mechanical calculator  in the history of computing?", "answer": "Blaise Pascal's mechanical calculator, known as the Pascaline, was one of  the first mechanical devices designed to assist with arithmetic calculations. It marked  a significant step toward automating computation and reducing human error in  manual calculations." },
+                { "type": "short_answer", "question": "How did punched card tabulation contribute to early data  processing?", "answer": "Punched card tabulation allowed for the automated sorting and processing  of large volumes of data. It was widely used for census data, business accounting,  and scientific research before the advent of electronic computers." },
+                { "type": "short_answer", "question": "What role did the microprocessor play in the development of  personal computers?", "answer": "The microprocessor integrated the central processing unit (CPU) onto a  single chip, making it possible to build smaller, more affordable computers. This  innovation laid the foundation for the widespread adoption of personal computers." },
+                { "type": "short_answer", "question": "Define ethics according to the text.", "answer": "Ethics, also called moral philosophy, is a rational examination of people’s  moral beliefs and behaviors. It involves analyzing voluntary moral choices people  make and determining whether those choices are right or wrong based on reasoning  and commonly held values." },
+                { "type": "short_answer", "question": "What is ethical relativism?", "answer": "Ethical relativism is the theory that there are no universal moral norms of  right and wrong. According to this view, different individuals or groups can have  completely opposite views of a moral problem, and both can be right depending on  cultural or personal context." },
+                { "type": "short_answer", "question": "Why does the text say we need to study ethics in the information  age?", "answer": "We need to study ethics in the information age because new technologies  such as smartphones, social media, and artificial intelligence raise novel moral  dilemmas. Existing moral guidelines may seem outdated or unclear, so individuals  must learn how to work through these problems rationally and systematically." },
+                { "type": "short_answer", "question": "What is spam, and why is it a major issue in networked  communication?", "answer": "Spam refers to unsolicited bulk email sent for advertising, phishing, or  spreading malware. It's a major issue because it consumes bandwidth, storage space,  and can lead to fraud, identity theft, and loss of productivity." },
+                { "type": "short_answer", "question": "How do mobile applications differ from traditional web Browse  on desktop computers?", "answer": "Mobile apps are software programs designed specifically for smartphones  and tablets. They are optimized for touch interfaces, limited screen size, and  mobility. Unlike desktop browsers, they often provide faster access to services and  can function offline or with intermittent connectivity." },
+                { "type": "short_answer", "question": "What role does the World Wide Web play in global communication  and information sharing?", "answer": "The World Wide Web allows individuals and organizations to publish, link,  and access information globally. Its decentralized nature enables anyone to  contribute content without central approval, making it a powerful tool for education,  commerce, and social interaction." },
+                { "type": "short_answer", "question": "What is the purpose of web filtering software in schools and  libraries?", "answer": "The purpose of web filtering software is to block access to inappropriate or  harmful online content such as pornography, violence, and hate speech, especially  to protect children from exposure to material unsuitable for minors." },
+                { "type": "short_answer", "question": "What does the Children’s Internet Protection Act (CIPA) require  of schools and libraries that receive federal funding for internet access?", "answer": "CIPA requires schools and libraries that receive federal funding for internet  access to install technology protection measures (web filters) that block or filter  visual depictions that are obscene, child pornography, or otherwise harmful to  minors." },
+                { "type": "short_answer", "question": "Why do some critics argue that web filters can be problematic?", "answer": "Critics argue that web filters can sometimes overblock legitimate  educational content, suppress free speech, and give a false sense of security. They  may also fail to block all harmful content or allow bypassing through alternative  means like mobile data." },
+                { "type": "short_answer", "question": "What is intellectual property, and how is it different from tangible  property?", "answer": "Intellectual property refers to creations of the mind such as inventions,  literary works, songs, and computer programs. It differs from tangible property  because it can be copied without being physically taken, and ownership does not  depend on physical possession." },
+                { "type": "short_answer", "question": "According to John Locke’s theory of property rights, what justifies  a person's right to own something?", "answer": "Locke argued that individuals have a natural right to the fruits of their labor.  By mixing their labor with resources in nature, people acquire ownership. However,  this argument applies more clearly to physical objects than to intellectual property." },
+                { "type": "short_answer", "question": "What are two main benefits of granting intellectual property  protection?", "answer": "Two key benefits are:  Encouraging innovation and creativity by allowing creators to profit from their work.  Promoting the dissemination of knowledge and culture once the property enters the  public domain after the protection period ends." },
+                { "type": "short_answer", "question": "What is a trademark, and how does it benefit consumers and  companies?", "answer": "A trademark is a symbol, word, or phrase used to identify and distinguish  the goods or services of one company from another. It benefits consumers by  helping them recognize product quality and origin, and it benefits companies by  protecting their brand identity and building consumer trust." },
+                { "type": "short_answer", "question": "How do patents differ from copyrights in terms of what they  protect and how long the protection lasts?", "answer": "Patents protect inventions, machines, or processes and last for 20 years,  while copyrights protect original works of authorship (e.g., books, music, software  code) and last for the life of the author plus 70 years. Patents require public  disclosure of the invention, whereas copyrights protect expression but not ideas." },
+                { "type": "short_answer", "question": "Why is it important for companies to maintain trade secrets, and  how is this different from other forms of intellectual property protection?", "answer": "Trade secrets are confidential pieces of intellectual property that provide  competitive advantages, such as formulas or algorithms. Unlike patents or  copyrights, trade secrets are protected indefinitely as long as they remain secret.  There is no requirement for public disclosure, but legal protection only applies if  reasonable efforts are made to keep the information confidential." },
+                { "type": "short_answer", "question": "What does a software copyright protect, and what does it not  protect?", "answer": "A software copyright protects the original expression of an idea , such as  the actual source code or executable program, but not the underlying ideas,  algorithms, or functionality of the software." },
+                { "type": "short_answer", "question": "Why did interest in copyrighting software increase in the 1960s?", "answer": "Interest in copyrighting software increased in the 1960s with the  emergence of an independent software industry , where software was no longer  bundled with hardware. This led to a need for legal protection of software as a  separate product." },
+                { "type": "short_answer", "question": "What is the significance of the Copyright Act of 1976 regarding  software?", "answer": "The Copyright Act of 1976 explicitly recognized that software can be  copyrighted , establishing a legal foundation for protecting computer programs  under U.S. copyright law." },
+                { "type": "short_answer", "question": "How did the court rule in Oracle v. Google regarding the copying  of Java API declaring code?", "answer": "In Oracle v. Google, the court ruled that Google's copying of 11,500 lines  of declaring code from 37 Java API packages violated Oracle’s copyright , stating  that the copying went beyond what would be considered fair use." },
+                { "type": "short_answer", "question": "What is open-source software, and what are its key characteristics?", "answer": "Open-source software is distributed under licenses that allow users to  access, modify, and redistribute the source code. Key characteristics include: no  restrictions on selling or giving away the software, availability of source code,  permission to modify and distribute derived works, freedom in usage, universal  rights without additional licensing, and no restrictions on other software included  with the distribution." },
+                { "type": "short_answer", "question": "Name three benefits of using open-source software.", "answer": "Users can improve the software by fixing bugs and adding features. Faster  evolution and frequent updates due to community involvement. Eliminates vendor  lock-in — users can continue development if a vendor stops supporting the software." },
+                { "type": "short_answer", "question": "What was the goal of the GNU Project, and how did it influence  Linux?", "answer": "The GNU Project aimed to develop a complete Unix-compatible operating  system composed entirely of free software. It provided many essential components  used in Linux systems. Together with the Linux kernel, they form the GNU/Linux  operating system, which is a major example of open-source success." },
+                { "type": "short_answer", "question": "Give two examples of widely used open-source software and briefly  describe their purpose.", "answer": "Apache HTTP Server – A popular web server that powers about half of the world’s  websites.  Firefox – An open-source web browser known for privacy features and user  customization." },
+                { "type": "short_answer", "question": "How does the text define privacy?", "answer": "The text defines privacy as a “zone of inaccessibility” — the extent to  which individuals have control over who has access to their personal information. It  includes the idea of controlling the flow of personal information in various contexts." },
+                { "type": "short_answer", "question": "What are two benefits of privacy mentioned in the book?", "answer": "Two benefits of privacy include:  ✓ Helping individuals develop as autonomous moral agents.  ✓ Providing people with the opportunity to be themselves without external  judgment or interference." },
+                { "type": "short_answer", "question": "According to the book, how is privacy connected to trust?", "answer": "Privacy and trust are closely related because we often reveal personal  information to gain others’ trust. For example, when applying for a mortgage,  sharing income details builds trust with the lender. However, excessive exposure can  also lead to vulnerability and loss of autonomy." },
+                { "type": "short_answer", "question": "Why might too much privacy be harmful?", "answer": "Excessive privacy can prevent transparency and hinder social interactions  that depend on shared information. For instance, if people conceal too much, it may  become difficult for others to trust them or collaborate effectively." },
+                { "type": "short_answer", "question": "What is a public record, and why is it important for society to  maintain public records?", "answer": "A public record is information collected by a government agency that is  made available to the public. Examples include birth certificates, marriage licenses,  criminal records, and property deeds. Public records are important because they  promote transparency, accountability, and fairness in government actions." },
+                { "type": "short_answer", "question": "How do private organizations use loyalty cards to gather and use  personal information?", "answer": "Private organizations use loyalty cards to track customers' purchasing  habits. This data helps them understand consumer behavior, personalize marketing  efforts, and improve sales strategies. However, this practice can raise privacy  concerns if users are unaware of how their data is being used." },
+                { "type": "short_answer", "question": "What are RFID tags, and what privacy concerns do they raise?", "answer": "RFID (Radio-Frequency Identification) tags are small devices used to  identify and track objects or people wirelessly. Privacy concerns arise because RFID  tags can be scanned without a person's knowledge, potentially allowing unauthorized  tracking of individuals or revealing sensitive behaviors." },
+                { "type": "short_answer", "question": "How do cookies affect user privacy when Browse the web?", "answer": "Cookies are small text files stored by websites to remember user  preferences and track online activity. While they enhance user experience by  enabling personalized services, they also allow companies to build detailed profiles  of users’ Browse habits, raising concerns about surveillance and loss of anonymity." },
+                { "type": "short_answer", "question": "What is hacking, and how has the term evolved since the 1950s?", "answer": "Hacking originally referred to enthusiastic programmers who explored  systems creatively and constructively. Over time, the term evolved to include  individuals who exploit computer systems illegally or unethically, often for personal  gain, political motives, or to cause harm." },
+                { "type": "short_answer", "question": "Define malware and give three examples of different types of  malware?", "answer": "Malware is any software designed to harm a computer system, steal data,  or perform unauthorized actions. Examples include viruses, worms, ransomware,  Trojan horses, spyware, adware, and rootkits." },
+                { "type": "short_answer", "question": "What was the significance of the Internet Worm created by Robert  Tappan Morris in 1988?", "answer": "The Morris Worm was the first major worm to spread across the internet,  unintentionally causing widespread disruption. It highlighted the vulnerabilities in  networked systems and led to increased awareness and development of cybersecurity  practices." },
+                { "type": "short_answer", "question": "Explain what phishing is and why it is considered a form of social  engineering.", "answer": "Phishing is a type of cyberattack where attackers deceive users into  revealing sensitive information such as passwords or credit card details, often  through fake emails or websites. It is considered social engineering because it  exploits human psychology rather than technical vulnerabilities." },
+                { "type": "short_answer", "question": "Define SQL injection and explain how it can compromise a  database-driven website.", "answer": "SQL injection is an attack that exploits vulnerabilities in a web application’s  input fields to inject malicious SQL commands. If successful, it can allow attackers  to access, modify, or delete data stored in the backend database without  authorization." },
+                { "type": "short_answer", "question": "What is a Denial-of-Service (DoS) attack, and how does it differ  from a Distributed Denial-of-Service (DDoS) attack?", "answer": "A DoS attack overwhelms a system or network with traffic from a single  source to make it unavailable. A DDoS attack uses multiple compromised devices  (often part of a botnet) to flood the target with traffic, making it more powerful and  difficult to mitigate." },
+                { "type": "short_answer", "question": "How did the Mirai botnet demonstrate the security risks associated  with Internet of Things (IoT) devices?", "answer": "The Mirai botnet used thousands of insecure IoT devices (like cameras and  routers) infected with malware to launch massive DDoS attacks. This showed how  poorly secured IoT devices can be exploited at scale to disrupt online services." },
+                { "type": "multiple_choice", "question": "Which inventor created one of the earliest mechanical calculators?", "options": [ "Charles Babbage", "Blaise Pascal", "Herman Hollerith", "John Atanasoff" ], "correct_answer": "Blaise Pascal" },
+                { "type": "multiple_choice", "question": "What was the main purpose of Herman Hollerith’s punched card system?", "options": [ "To perform mathematical computations", "To automate telephone switching", "To tabulate census data", "To store software programs" ], "correct_answer": "To tabulate census data" },
+                { "type": "multiple_choice", "question": "Which company became dominant in the mechanical calculator market in  the 1890s?", "options": [ "IBM", "Remington Rand", "Burroughs Adding Machine Company", "Intel" ], "correct_answer": "Burroughs Adding Machine Company" },
+                { "type": "multiple_choice", "question": "What is a key advantage of using punched cards in early computing systems?", "options": [ "They allowed real-time data processing", "They provided permanent storage of data", "They enabled graphical user interfaces", "They supported wireless communication" ], "correct_answer": "They provided permanent storage of data" },
+                { "type": "multiple_choice", "question": "What was the name of the world’s first commercial computer?", "options": [ "ENIAC", "UNIVAC", "Ferranti Mark 1", "IBM System/360" ], "correct_answer": "Ferranti Mark 1" },
+                { "type": "multiple_choice", "question": "Which of the following was NOT a precursor to modern electronic  computers?", "options": [ "Mechanical calculators", "Punched card tabulators", "Typewriters", "Early telegraph systems" ], "correct_answer": "Early telegraph systems" },
+                { "type": "multiple_choice", "question": "Which company is considered the corporate descendant of Herman  Hollerith’s Tabulating Machine Company?", "options": [ "Hewlett-Packard (HP)", "Microsoft", "International Business Machines (IBM)", "Apple" ], "correct_answer": "International Business Machines (IBM)" },
+                { "type": "multiple_choice", "question": "What was the significance of the Intel 4004 microprocessor?", "options": [ "It was the first computer to use transistors", "It was the first commercially available microprocessor", "It was the first operating system", "It was the first personal computer" ], "correct_answer": "It was the first commercially available microprocessor" },
+                { "type": "multiple_choice", "question": "Which of the following best describes a microprocessor?", "options": [ "A device that stores data permanently", "A machine that prints punched cards", "A single chip that contains the central processing unit (CPU)", "A type of analog computer" ], "correct_answer": "A single chip that contains the central processing unit (CPU)" },
+                { "type": "multiple_choice", "question": "What event significantly contributed to the development of personal  computers in the 1970s and 1980s?", "options": [ "The invention of the Internet", "The availability of affordable microprocessors", "The launch of the World Wide Web", "The introduction of cloud computing" ], "correct_answer": "The availability of affordable microprocessors" },
+                { "type": "multiple_choice", "question": "Which of the following is true about early personal computers?", "options": [ "They were primarily used by governments and universities", "They required highly trained professionals to operate", "They were widely available to consumers and hobbyists", "They were too expensive for individual ownership" ], "correct_answer": "They were widely available to consumers and hobbyists" },
+                { "type": "multiple_choice", "question": "What was the impact of microprocessors on everyday devices?", "options": [ "They made all devices larger and heavier", "They enabled computers to be embedded into appliances like cars and phones", "They eliminated the need for electricity", "They reduced the speed of data transmission" ], "correct_answer": "They enabled computers to be embedded into appliances like cars and phones" },
+                { "type": "multiple_choice", "question": "What did the transition from punched cards to electronic computers allow  for?", "options": [ "Slower data entry", "Manual data sorting", "Faster and more efficient data processing", "Increased reliance on paper records" ], "correct_answer": "Faster and more efficient data processing" },
+                { "type": "multiple_choice", "question": "Which of the following companies played a major role in the early  development of personal computers?", "options": [ "General Electric", "Apple Inc.", "AT&T", "DuPont" ], "correct_answer": "Apple Inc." },
+                { "type": "multiple_choice", "question": "What was one of the key reasons for the rise of personal computers?", "options": [ "Decreased interest in automation", "Lower cost and increased accessibility of microprocessors", "Government ban on large-scale computing", "Introduction of typewriters" ], "correct_answer": "Lower cost and increased accessibility of microprocessors" },
+                { "type": "multiple_choice", "question": "Which of the following best defines “morality”?", "options": [ "A set of religious beliefs", "A rational analysis of human behavior", "Guidelines indicating what people are supposed to do in various circumstances", "A system of laws enforced by the government" ], "correct_answer": "Guidelines indicating what people are supposed to do in various circumstances" },
+                { "type": "multiple_choice", "question": "Which ethical theory holds that moral principles are determined by  individual belief or cultural norms?", "options": [ "Divine Command Theory", "Kantianism", "Utilitarianism", "Ethical Relativism" ], "correct_answer": "Ethical Relativism" },
+                { "type": "multiple_choice", "question": "What is one reason given in the text for rejecting ethical egoism?", "options": [ "It leads to too many legal consequences", "It does not respect the ethical point of view or consider the good of others", "It is too complicated to apply in real life", "It contradicts religious teachings" ], "correct_answer": "It does not respect the ethical point of view or consider the good of others" },
+                { "type": "multiple_choice", "question": "Which philosopher is associated with Kantianism?", "options": [ "John Stuart Mill", "Aristotle", "Immanuel Kant", "Socrates" ], "correct_answer": "Immanuel Kant" },
+                { "type": "multiple_choice", "question": "What is the focus of virtue ethics?", "options": [ "The consequences of actions", "The rules governing behavior", "The character of the person performing the action", "Religious commandments" ], "correct_answer": "The character of the person performing the action" },
+                { "type": "multiple_choice", "question": "According to the text, which ethical theories are considered most workable?", "options": [ "Subjective relativism and cultural relativism", "Divine command theory and ethical egoism", "Kantianism, act utilitarianism, rule utilitarianism, social contract theory, and  virtue ethics", "Existentialism and nihilism" ], "correct_answer": "Kantianism, act utilitarianism, rule utilitarianism, social contract theory, and  virtue ethics" },
+                { "type": "multiple_choice", "question": "Which of the following is NOT an ethical theory discussed in the text?", "options": [ "Ethical Egoism", "Cultural Relativism", "Logical Positivism", "Divine Command Theory" ], "correct_answer": "Logical Positivism" },
+                { "type": "multiple_choice", "question": "What distinguishes ethical problems in computing from other fields,  according to the text?", "options": [ "They always involve breaking the law", "They only affect technical experts", "They tend to create more policy vacuums due to the universal nature of  computers", "They are easier to resolve than other ethical issues" ], "correct_answer": "They tend to create more policy vacuums due to the universal nature of  computers" },
+                { "type": "multiple_choice", "question": "What is the main idea behind the Golden Rule?", "options": [ "Act only according to maxims that could be universal laws", "Maximize happiness for the greatest number", "Do unto others as you would have them do unto you", "Follow divine commands without question" ], "correct_answer": "Do unto others as you would have them do unto you" },
+                { "type": "multiple_choice", "question": "Which ethical theory emphasizes duty and universal moral laws?", "options": [ "Utilitarianism", "Virtue Ethics", "Kantianism", "Ethical Egoism" ], "correct_answer": "Kantianism" },
+                { "type": "multiple_choice", "question": "According to the text, why is ethics important in the digital age?", "options": [ "Because technology reduces the number of ethical dilemmas", "Because existing moral guidelines sometimes seem old-fashioned or unclear", "Because people are less connected globally now", "Because laws are sufficient to guide all decisions" ], "correct_answer": "Because existing moral guidelines sometimes seem old-fashioned or unclear" },
+                { "type": "multiple_choice", "question": "What is one key feature of a good ethical theory, according to the text?", "options": [ "It must align with religious doctrine", "It should allow someone to justify any decision they want", "It should enable logical arguments that are persuasive to a diverse audience", "It must be simple enough for children to understand" ], "correct_answer": "It should enable logical arguments that are persuasive to a diverse audience" },
+                { "type": "multiple_choice", "question": "Which ethical theory evaluates actions based on their outcomes or  consequences?", "options": [ "Kantianism", "Virtue Ethics", "Utilitarianism", "Cultural Relativism" ], "correct_answer": "Utilitarianism" },
+                { "type": "multiple_choice", "question": "What is a major criticism of subjective relativism?", "options": [ "It supports universal moral truths", "It makes it impossible to criticize harmful practices in other cultures", "It assumes that moral truths are independent of individual opinion", "It allows for consistent moral judgments across societies" ], "correct_answer": "It makes it impossible to criticize harmful practices in other cultures" },
+                { "type": "multiple_choice", "question": "Which ethical theory suggests that moral principles depend on what God  commands?", "options": [ "Utilitarianism", "Divine Command Theory", "Social Contract Theory", "Ethical Egoism" ], "correct_answer": "Divine Command Theory" },
+                { "type": "multiple_choice", "question": "Which of the following best defines \"spam\"?", "options": [ "A secure messaging service", "Unsolicited bulk email", "A type of instant message", "An encrypted form of communication" ], "correct_answer": "Unsolicited bulk email" },
+                { "type": "multiple_choice", "question": "Why did spam become a significant problem after the Internet became  commercialized?", "options": [ "Because people started using more mobile devices", "Because sending emails cost nothing for spammers but created profits", "Because governments stopped enforcing laws", "Because fewer people used email" ], "correct_answer": "Because sending emails cost nothing for spammers but created profits" },
+                { "type": "multiple_choice", "question": "What percentage of all email traffic was spam at its peak in 2009?", "options": [ "Around 25%", "Around 57%", "Around 85%", "Around 99%" ], "correct_answer": "Around 85%" },
+                { "type": "multiple_choice", "question": "Which of the following is NOT a reason people receive spam?", "options": [ "Signing up for contests that share their email with marketers", "Using strong passwords on secure websites", "Having their email address stolen in a data breach", "Subscribing to newsletters with fine print allowing third-party sharing" ], "correct_answer": "Using strong passwords on secure websites" },
+                { "type": "multiple_choice", "question": "What is a botnet?", "options": [ "A type of mobile app", "A network of compromised computers controlled remotely", "A secure email system", "A search engine optimization tool" ], "correct_answer": "A network of compromised computers controlled remotely" },
+                { "type": "multiple_choice", "question": "Which of the following is an example of a mobile application?", "options": [ "Microsoft Word", "Google Chrome browser", "Instagram", "Adobe Photoshop" ], "correct_answer": "Instagram" },
+                { "type": "multiple_choice", "question": "What makes the World Wide Web unique compared to other communication  systems?", "options": [ "It requires government approval to post content", "It is centralized under one authority", "It allows anyone to publish content without permission", "It only works with paid subscriptions" ], "correct_answer": "It allows anyone to publish content without permission" },
+                { "type": "multiple_choice", "question": "What is a URL?", "options": [ "A username for logging into a website", "A password manager tool", "A uniform resource locator that identifies web pages", "A type of mobile app" ], "correct_answer": "A uniform resource locator that identifies web pages" },
+                { "type": "multiple_choice", "question": "What is phishing?", "options": [ "A method to improve internet speed", "Sending fake emails to trick users into revealing personal information", "Encrypting all web traffic", "Blocking spam automatically" ], "correct_answer": "Sending fake emails to trick users into revealing personal information" },
+                { "type": "multiple_choice", "question": "Why is Wi-Fi considered a security risk when accessing the internet?", "options": [ "It provides faster download speeds", "It always encrypts your data", "It can be intercepted by others on the same network", "It blocks spam automatically" ], "correct_answer": "It can be intercepted by others on the same network" },
+                { "type": "multiple_choice", "question": "What is one benefit of using mobile apps over websites on mobile devices?", "options": [ "Apps require more data to load", "Apps are designed for smaller screens and touch interfaces", "Apps are slower than websites", "Apps cannot work offline" ], "correct_answer": "Apps are designed for smaller screens and touch interfaces" },
+                { "type": "multiple_choice", "question": "What is the primary protocol used to securely transmit data between a user  and a website?", "options": [ "HTTP", "FTP", "HTTPS", "SMTP" ], "correct_answer": "HTTPS" },
+                { "type": "multiple_choice", "question": "Which of the following is true about spam filters?", "options": [ "They eliminate all spam forever", "They reduce the amount of spam reaching users' inboxes", "They increase the number of spam messages sent", "They prevent users from sending emails" ], "correct_answer": "They reduce the amount of spam reaching users' inboxes" },
+                { "type": "multiple_choice", "question": "What is a key feature of the World Wide Web that supports information  sharing?", "options": [ "It uses only one language", "It allows hyperlinks between documents", "It restricts publishing to experts", "It requires special hardware to access" ], "correct_answer": "It allows hyperlinks between documents" },
+                { "type": "multiple_choice", "question": "What impact have mobile apps had on internet usage?", "options": [ "Reduced overall internet use", "Made web Browse less popular among younger generations", "Increased time spent online through optimized mobile experiences", "Decreased access to online services" ], "correct_answer": "Increased time spent online through optimized mobile experiences" },
+                { "type": "multiple_choice", "question": "Which law mandates the use of web filters in schools and libraries receiving  federal funding for internet access?", "options": [ "Digital Millennium Copyright Act (DMCA)", "Children’s Internet Protection Act (CIPA)", "Family Educational Rights and Privacy Act (FERPA)", "Health Insurance Portability and Accountability Act (HIPAA)" ], "correct_answer": "Children’s Internet Protection Act (CIPA)" },
+                { "type": "multiple_choice", "question": "What is one of the main concerns parents have about children accessing the  internet unsupervised?", "options": [ "Too many educational games", "Exposure to inappropriate content such as pornography or violence", "Too much social interaction", "Increased physical activity" ], "correct_answer": "Exposure to inappropriate content such as pornography or violence" },
+                { "type": "multiple_choice", "question": "According to the text, what percentage of spam was sent via botnets at its  peak in 2009?", "options": [ "20%", "50%", "70%", "90%" ], "correct_answer": "90%" },
+                { "type": "multiple_choice", "question": "What is an example of a tool used to prevent children from viewing  inappropriate content online?", "options": [ "Spam filter", "Web browser cache", "Antivirus program", "Parental control software or web filter" ], "correct_answer": "Parental control software or web filter" },
+                { "type": "multiple_choice", "question": "What is a common criticism of web filtering software?", "options": [ "It speeds up internet Browse", "It blocks too much legitimate content", "It encourages more screen time", "It increases access to adult websites" ], "correct_answer": "It blocks too much legitimate content" },
+                { "type": "multiple_choice", "question": "Under CIPA, which group must be protected from harmful online content?", "options": [ "All internet users", "Children under the age of 17", "Adults only", "Government employees" ], "correct_answer": "Children under the age of 17" },
+                { "type": "multiple_choice", "question": "How might students bypass web filters in schools or libraries?", "options": [ "Using school-provided devices", "Using mobile data or personal hotspots", "Logging in with teacher accounts", "Turning off Wi-Fi" ], "correct_answer": "Using mobile data or personal hotspots" },
+                { "type": "multiple_choice", "question": "What is a potential unintended consequence of using web filters in schools?", "options": [ "Students learn to break into secure systems", "Educational websites may be mistakenly blocked", "Students become less interested in technology", "Teachers lose control of classroom behavior" ], "correct_answer": "Educational websites may be mistakenly blocked" },
+                { "type": "multiple_choice", "question": "What role do librarians play under CIPA regarding internet access?", "options": [ "They are required to monitor every search made by patrons", "They can disable filters upon request by adults for lawful purposes", "They must delete all internet history daily", "They must approve each website visited by children" ], "correct_answer": "They can disable filters upon request by adults for lawful purposes" },
+                { "type": "multiple_choice", "question": "Which of the following is NOT a reason why parents use parental controls?", "options": [ "To limit exposure to violent content", "To track a child’s location", "To encourage unlimited screen time", "To prevent cyberbullying" ], "correct_answer": "To encourage unlimited screen time" },
+                { "type": "multiple_choice", "question": "What is one challenge of enforcing internet safety laws across different  countries?", "options": [ "All countries have the same laws", "Different cultural standards affect what is considered appropriate", "Internet usage is declining globally", "Only adults use the internet in most countries" ], "correct_answer": "Different cultural standards affect what is considered appropriate" },
+                { "type": "multiple_choice", "question": "What is “cyberbullying”?", "options": [ "Sending spam emails", "Posting inappropriate videos", "Harassing someone online or through digital communication", "Downloading illegal music" ], "correct_answer": "Harassing someone online or through digital communication" },
+                { "type": "multiple_choice", "question": "What is the name of the act that also requires filtering of harmful content  in schools and libraries alongside CIPA?", "options": [ "Communications Decency Act", "No Child Left Behind Act", "Child Online Protection Act (COPA)", "USA PATRIOT Act" ], "correct_answer": "Child Online Protection Act (COPA)" },
+                { "type": "multiple_choice", "question": "Which of the following best describes the impact of smartphones on  children’s internet access?", "options": [ "Smartphones make it harder for children to access the internet", "Smartphones increase opportunities for children to access the internet  unsupervised", "Smartphones automatically filter all harmful content", "Smartphones eliminate the need for parental controls" ], "correct_answer": "Smartphones increase opportunities for children to access the internet  unsupervised" },
+                { "type": "multiple_choice", "question": "What is one ethical issue related to the use of web filters in public  institutions?", "options": [ "Filters always improve student learning outcomes", "Filters may infringe on First Amendment rights", "Filters guarantee complete protection from harmful content", "Filters are never used incorrectly" ], "correct_answer": "Filters may infringe on First Amendment rights" },
+                { "type": "multiple_choice", "question": "Which of the following best defines \"intellectual property\"?", "options": [ "Physical items owned by an individual", "Tangible assets like land or buildings", "Creations of the mind such as inventions, writings, and music", "Government-owned patents and trademarks" ], "correct_answer": "Creations of the mind such as inventions, writings, and music" },
+                { "type": "multiple_choice", "question": "What is one reason governments grant intellectual property rights?", "options": [ "To restrict access to information", "To increase government revenue through taxes", "To promote innovation and creativity", "To eliminate competition among businesses" ], "correct_answer": "To promote innovation and creativity" },
+                { "type": "multiple_choice", "question": "What happens to intellectual property when its protection period expires?", "options": [ "It becomes illegal to use", "It must be renewed at great cost", "It enters the public domain", "The creator loses all rights permanently" ], "correct_answer": "It enters the public domain" },
+                { "type": "multiple_choice", "question": "Which philosopher is known for developing a theory of natural property  rights based on labor?", "options": [ "Immanuel Kant", "John Locke", "John Stuart Mill", "Jeremy Bentham" ], "correct_answer": "John Locke" },
+                { "type": "multiple_choice", "question": "Why is it difficult to apply Locke’s theory directly to intellectual property?", "options": [ "Intellectual property cannot be stolen", "Copying intellectual property doesn’t remove the original", "Only governments should own ideas", "Ideas are always shared communally" ], "correct_answer": "Copying intellectual property doesn’t remove the original" },
+                { "type": "multiple_choice", "question": "What is a paradox related to intellectual property?", "options": [ "People prefer physical books over e-books", "Copying a song removes the original copy", "Copying a play doesn’t take away the playwright’s copy", "Patents expire faster than copyrights" ], "correct_answer": "Copying a play doesn’t take away the playwright’s copy" },
+                { "type": "multiple_choice", "question": "What is a trade secret?", "options": [ "A publicly available formula or process", "A patented invention made by a company", "A confidential business practice that gives a competitive advantage", "A registered trademark used internationally" ], "correct_answer": "A confidential business practice that gives a competitive advantage" },
+                { "type": "multiple_choice", "question": "Which of the following is NOT a form of intellectual property protection?", "options": [ "Trademark", "Patent", "Lease agreement", "Copyright" ], "correct_answer": "Lease agreement" },
+                { "type": "multiple_choice", "question": "What is the purpose of the fair-use doctrine?", "options": [ "To allow unlimited copying of any material", "To prevent creators from profiting from their work", "To balance the rights of creators with the needs of the public", "To ban all unauthorized use of copyrighted materials" ], "correct_answer": "To balance the rights of creators with the needs of the public" },
+                { "type": "multiple_choice", "question": "Which U.S. law extended copyright protections to include digital media and  software?", "options": [ "Digital Millennium Copyright Act (DMCA)", "Fair Use Act", "First Amendment", "Freedom of Information Act" ], "correct_answer": "Digital Millennium Copyright Act (DMCA)" },
+                { "type": "multiple_choice", "question": "What is a criticism of current intellectual property laws?", "options": [ "They are too easy to enforce globally", "They encourage excessive sharing of information", "They may stifle innovation due to restrictive licensing", "They only protect small independent creators" ], "correct_answer": "They may stifle innovation due to restrictive licensing" },
+                { "type": "multiple_choice", "question": "What is the “veil of ignorance” associated with in ethical discussions about  fairness?", "options": [ "Utilitarianism", "Virtue ethics", "Social contract theory", "Deontology" ], "correct_answer": "Social contract theory" },
+                { "type": "multiple_choice", "question": "What is one limitation of intellectual property rights?", "options": [ "They last forever", "They are automatically granted to all inventors", "They are time-limited and subject to public interest", "They apply equally in all countries" ], "correct_answer": "They are time-limited and subject to public interest" },
+                { "type": "multiple_choice", "question": "What is the purpose of Creative Commons licenses?", "options": [ "To restrict all use of intellectual property", "To replace traditional copyright laws", "To allow creators to share their work under specific conditions", "To make all content freely available without permission" ], "correct_answer": "To allow creators to share their work under specific conditions" },
+                { "type": "multiple_choice", "question": "How do intellectual property rights benefit society according to utilitarian  reasoning?", "options": [ "By maximizing profits for corporations", "By promoting progress and innovation for the greater good", "By limiting access to sensitive information", "By reducing global competition" ], "correct_answer": "By promoting progress and innovation for the greater good" },
+                { "type": "multiple_choice", "question": "Which of the following best describes a patent?", "options": [ "A government-granted right to exclude others from making, using, or selling an  invention", "A mark used to distinguish a company’s products from others", "The exclusive right to reproduce and distribute a literary or artistic work", "A type of contract between two companies" ], "correct_answer": "A government-granted right to exclude others from making, using, or selling an  invention" },
+                { "type": "multiple_choice", "question": "Which of the following is NOT protected by copyright law?", "options": [ "A novel", "A computer program", "An idea for a new app", "A song" ], "correct_answer": "An idea for a new app" },
+                { "type": "multiple_choice", "question": "What is the duration of a U.S. utility patent?", "options": [ "10 years", "15 years", "20 years", "Lifetime of the inventor" ], "correct_answer": "20 years" },
+                { "type": "multiple_choice", "question": "Which of the following is an example of a trade secret?", "options": [ "A published research paper", "A registered logo", "A proprietary manufacturing process", "A publicly available software license" ], "correct_answer": "A proprietary manufacturing process" },
+                { "type": "multiple_choice", "question": "Which government agency oversees trademarks and patents in the United  States?", "options": [ "Federal Trade Commission (FTC)", "Internal Revenue Service (IRS)", "United States Patent and Trademark Office (USPTO)", "National Institutes of Health (NIH)" ], "correct_answer": "United States Patent and Trademark Office (USPTO)" },
+                { "type": "multiple_choice", "question": "What is a key difference between a trademark and a service mark?", "options": [ "Trademarks are used for physical products; service marks are for digital products", "Trademarks protect inventions; service marks protect logos", "Trademarks apply to goods; service marks apply to services", "Trademarks are registered internationally; service marks are only valid in the  U.S." ], "correct_answer": "Trademarks apply to goods; service marks apply to services" },
+                { "type": "multiple_choice", "question": "Which of the following rights is NOT granted to the owner of a copyright?", "options": [ "The right to reproduce the work", "The right to distribute copies", "The right to patent the work", "The right to create derivative works" ], "correct_answer": "The right to patent the work" },
+                { "type": "multiple_choice", "question": "Which of the following is protected by copyright law?", "options": [ "Ideas", "Facts", "Computer source code", "Titles of songs" ], "correct_answer": "Computer source code" },
+                { "type": "multiple_choice", "question": "What happens when a patent expires?", "options": [ "The invention becomes illegal to use", "The invention can be freely used and sold by anyone", "The patent must be renewed at a high cost", "The inventor loses all rights permanently" ], "correct_answer": "The invention can be freely used and sold by anyone" },
+                { "type": "multiple_choice", "question": "Which of the following is a reason why trademarks should be chosen  carefully?", "options": [ "They can never be changed once registered", "They must be unique enough to be legally defensible", "They must always include a logo", "They are only valid in the state where they were registered" ], "correct_answer": "They must be unique enough to be legally defensible" },
+                { "type": "multiple_choice", "question": "Which of the following is true about trade secrets?", "options": [ "They are protected only for a limited time", "They must be publicly disclosed to receive protection", "They can be protected indefinitely if kept secret", "They are automatically granted upon creation" ], "correct_answer": "They can be protected indefinitely if kept secret" },
+                { "type": "multiple_choice", "question": "Which of the following is an example of a copyright violation?", "options": [ "Using a patented invention without permission", "Selling counterfeit branded merchandise", "Copying and distributing a movie without authorization", "Reverse-engineering a competitor's product" ], "correct_answer": "Copying and distributing a movie without authorization" },
+                { "type": "multiple_choice", "question": "What is “fair use” in the context of copyright law?", "options": [ "Unlimited copying of any copyrighted material", "Legal use of a trademarked logo", "Limited use of copyrighted material without permission for purposes like  criticism, comment, news reporting, teaching, or research", "Automatic permission to use patented technology" ], "correct_answer": "Limited use of copyrighted material without permission for purposes like  criticism, comment, news reporting, teaching, or research" },
+                { "type": "multiple_choice", "question": "What is one way a company can lose its trademark protection?", "options": [ "By renewing it every 10 years", "By allowing it to become generic through widespread misuse", "By advertising the product widely", "By using it consistently across all marketing materials" ], "correct_answer": "By allowing it to become generic through widespread misuse" },
+                { "type": "multiple_choice", "question": "Which of the following is NOT a form of intellectual property protection?", "options": [ "Patent", "Trademark", "Trade secret", "Public domain" ], "correct_answer": "Public domain" },
+                { "type": "multiple_choice", "question": "Which of the following is protected by software copyright law?", "options": [ "Algorithms used in a program", "The idea behind a sorting routine", "The actual source code of a program", "General programming techniques" ], "correct_answer": "The actual source code of a program" },
+                { "type": "multiple_choice", "question": "Which of the following is NOT protected by copyright in software?", "options": [ "Screen displays generated by a video game", "The structure of a database", "The concept of using relational databases", "The executable version of a program" ], "correct_answer": "The concept of using relational databases" },
+                { "type": "multiple_choice", "question": "What was a key development in software copyright in 1964?", "options": [ "The first software patent was issued", "The first software copyrights were applied for", "The first open-source license was created", "The first anti-piracy law was passed" ], "correct_answer": "The first software copyrights were applied for" },
+                { "type": "multiple_choice", "question": "What does a software copyright NOT typically protect?", "options": [ "The way a program looks and feels", "The source code of a program", "The executable file of a program", "The functional aspects or ideas of the software" ], "correct_answer": "The functional aspects or ideas of the software" },
+                { "type": "multiple_choice", "question": "What was the outcome of the Apple Computer v. Franklin Computer case?", "options": [ "Franklin was allowed to copy Apple’s operating system", "Franklin was found guilty of copyright infringement", "Apple was ordered to pay damages", "Both companies agreed to share the code freely" ], "correct_answer": "Franklin was found guilty of copyright infringement" },
+                { "type": "multiple_choice", "question": "What is one consequence of violating software copyright laws?", "options": [ "Loss of internet access", "Legal action and potential financial penalties", "Automatic revocation of all software licenses", "Requirement to publish the infringing code publicly" ], "correct_answer": "Legal action and potential financial penalties" },
+                { "type": "multiple_choice", "question": "What is \"fair use\" in the context of software copyright?", "options": [ "Unlimited copying of any software for personal use", "Copying software without giving credit to the author", "Limited use of copyrighted material without permission for purposes like  research or teaching", "Selling copies of software at a reduced price" ], "correct_answer": "Limited use of copyrighted material without permission for purposes like  research or teaching" },
+                { "type": "multiple_choice", "question": "Which of the following best describes a violation of software copyright?", "options": [ "Modifying open-source software under its license", "Downloading a pirated copy of a commercial software program", "Using a trial version before purchasing", "Sharing a purchased app with family members" ], "correct_answer": "Downloading a pirated copy of a commercial software program" },
+                { "type": "multiple_choice", "question": "What is the role of shrink-wrap licenses in software distribution?", "options": [ "They allow users to modify and redistribute the software", "They prevent users from returning the software after purchase", "They outline the terms of use once the packaging is opened", "They guarantee lifetime support for the software" ], "correct_answer": "They outline the terms of use once the packaging is opened" },
+                { "type": "multiple_choice", "question": "Which court case involved Sega v. Accolade?", "options": [ "A case about hacking into a video game console", "A case about reverse engineering for compatibility", "A case about patent infringement", "A case about trademark violations" ], "correct_answer": "A case about reverse engineering for compatibility" },
+                { "type": "multiple_choice", "question": "What is a common defense used in cases of alleged software copyright  infringement?", "options": [ "Public domain claim", "Fair use argument", "Trademark confusion", "Patent expiration" ], "correct_answer": "Fair use argument" },
+                { "type": "multiple_choice", "question": "What is the primary purpose of software copyright?", "options": [ "To restrict all forms of copying forever", "To allow creators to profit from their work and encourage innovation", "To make software free for educational institutions", "To eliminate competition among software developers" ], "correct_answer": "To allow creators to profit from their work and encourage innovation" },
+                { "type": "multiple_choice", "question": "Which of the following actions could lead to unintentional software  copyright infringement?", "options": [ "Using a search engine to find free software", "Reusing code snippets from online tutorials without attribution", "Reading documentation before writing original code", "Asking a friend for help debugging a program" ], "correct_answer": "Reusing code snippets from online tutorials without attribution" },
+                { "type": "multiple_choice", "question": "What happened in the case involving David LaMacchia and MIT?", "options": [ "He was convicted of making money from illegal downloads", "He was fined for sharing music files", "Charges were dropped because he didn’t profit from the infringement", "He was imprisoned for five years" ], "correct_answer": "Charges were dropped because he didn’t profit from the infringement" },
+                { "type": "multiple_choice", "question": "Which law was passed in response to the LaMacchia incident?", "options": [ "Digital Millennium Copyright Act (DMCA)", "No Electronic Theft Act of 1997", "Communications Decency Act", "Sarbanes-Oxley Act" ], "correct_answer": "No Electronic Theft Act of 1997" },
+                { "type": "multiple_choice", "question": "What is one reason why enforcing software copyright is difficult?", "options": [ "Most software is open source", "Digital files can be copied infinitely with no loss of quality", "All software is sold through licensed retailers", "Software cannot be patented" ], "correct_answer": "Digital files can be copied infinitely with no loss of quality" },
+                { "type": "multiple_choice", "question": "Which of the following is NOT a characteristic of open-source software?", "options": [ "The source code must be available", "Users cannot modify the code", "Derived works can be distributed under the same license", "There are no restrictions on how the software is used" ], "correct_answer": "Users cannot modify the code" },
+                { "type": "multiple_choice", "question": "What is one benefit of open-source software over proprietary software?", "options": [ "It is always more secure", "It allows users to fix bugs and customize the software", "It is always free of cost", "It is easier to use for beginners" ], "correct_answer": "It allows users to fix bugs and customize the software" },
+                { "type": "multiple_choice", "question": "What does the term “vendor lock-in” refer to?", "options": [ "When a company only sells hardware", "When users are forced to keep using a specific vendor because they can’t access  or modify the source code", "When software is too expensive for most users", "When a company offers free upgrades indefinitely" ], "correct_answer": "When users are forced to keep using a specific vendor because they can’t access  or modify the source code" },
+                { "type": "multiple_choice", "question": "Which organization promotes a common definition of open source?", "options": [ "Free Software Foundation", "Open Source Initiative", "World Wide Web Consortium", "Apache Software Foundation" ], "correct_answer": "Open Source Initiative" },
+                { "type": "multiple_choice", "question": "Which of the following is an example of open-source software?", "options": [ "Microsoft Word", "Adobe Photoshop", "Firefox", "Apple Safari" ], "correct_answer": "Firefox" },
+                { "type": "multiple_choice", "question": "Who founded the GNU Project?", "options": [ "Linus Torvalds", "Bill Gates", "Richard Stallman", "Steve Jobs" ], "correct_answer": "Richard Stallman" },
+                { "type": "multiple_choice", "question": "What is the full name of the operating system commonly referred to as  Linux?", "options": [ "Unix System V", "Windows NT", "GNU/Linux", "BSD Unix" ], "correct_answer": "GNU/Linux" },
+                { "type": "multiple_choice", "question": "Why do some companies sell open-source software even though it can be  freely downloaded?", "options": [ "Because they own the exclusive copyright", "Because they add value through support, documentation, and services", "Because they restrict the number of downloads", "Because they charge for access to the internet" ], "correct_answer": "Because they add value through support, documentation, and services" },
+                { "type": "multiple_choice", "question": "Which of the following best describes the concept of privacy according to the  book?", "options": [ "Complete isolation from society", "Control over who knows what about us", "Avoiding all digital communication", "Living anonymously online" ], "correct_answer": "Control over who knows what about us" },
+                { "type": "multiple_choice", "question": "According to the book, privacy is sometimes described as a \"prudential  right.\" What does this mean?", "options": [ "It is an absolute, unbreakable right", "It is a right that protects people only in public spaces", "It is a right that exists because it helps individuals and society function well", "It is a right guaranteed by the Constitution" ], "correct_answer": "It is a right that exists because it helps individuals and society function well" },
+                { "type": "multiple_choice", "question": "Which philosopher argued that every violation of privacy is actually a  violation of another right?", "options": [ "Warren and Brandeis", "Judith Jarvis Thomson", "James Rachels", "Daniel Solove" ], "correct_answer": "Judith Jarvis Thomson" },
+                { "type": "multiple_choice", "question": "According to James Rachels, why is privacy important?", "options": [ "Because it allows people to commit crimes without being caught", "Because it gives people control over how they present themselves to others", "Because it prevents all forms of surveillance", "Because it eliminates the need for trust" ], "correct_answer": "Because it gives people control over how they present themselves to others" },
+                { "type": "multiple_choice", "question": "What is one harm associated with a lack of privacy?", "options": [ "Increased freedom of expression", "Loss of autonomy and self-development", "Greater transparency in government", "More secure online transactions" ], "correct_answer": "Loss of autonomy and self-development" },
+                { "type": "multiple_choice", "question": "Which of the following is NOT a benefit of privacy discussed in the book?", "options": [ "Encouraging individual development", "Protecting people from identity theft", "Guaranteeing total anonymity online", "Supporting meaningful interpersonal relationships" ], "correct_answer": "Guaranteeing total anonymity online" },
+                { "type": "multiple_choice", "question": "How do retailers use loyalty cards in ways that relate to privacy concerns?", "options": [ "They offer discounts without collecting any data", "They track customer purchasing habits to personalize marketing", "They prevent customers from buying from competitors", "They reduce the cost of goods sold" ], "correct_answer": "They track customer purchasing habits to personalize marketing" },
+                { "type": "multiple_choice", "question": "According to the text, which of the following statements best reflects the  relationship between privacy and trust?", "options": [ "Privacy always undermines trust", "Trust requires some degree of privacy", "You cannot have both privacy and trust at the same time", "Trust can exist without any need for privacy" ], "correct_answer": "Trust requires some degree of privacy" },
+                { "type": "multiple_choice", "question": "What is the name of the taxonomy used in the book to classify privacy- related activities?", "options": [ "Fair Information Practices", "GDPR Framework", "Solove’s Taxonomy of Privacy", "HIPAA Privacy Rule" ], "correct_answer": "Solove’s Taxonomy of Privacy" },
+                { "type": "multiple_choice", "question": "Which of the following is NOT one of the four categories in Solove’s  taxonomy of privacy?", "options": [ "Information collection", "Information dissemination", "Data encryption", "Invasion" ], "correct_answer": "Data encryption" },
+                { "type": "multiple_choice", "question": "Why might someone argue that privacy is not a natural right?", "options": [ "Because it is protected by law in most countries", "Because it evolved from property rights rather than existing independently", "Because everyone agrees on its definition", "Because it applies equally in all cultural contexts" ], "correct_answer": "Because it evolved from property rights rather than existing independently" },
+                { "type": "multiple_choice", "question": "According to the text, what happens when people lose control over their  personal information?", "options": [ "They automatically gain more trust from others", "They experience a privacy invasion", "They become immune to identity theft", "They receive better customer service" ], "correct_answer": "They experience a privacy invasion" },
+                { "type": "multiple_choice", "question": "What is an example of a situation where people must give up privacy to  obtain a service?", "options": [ "Using a search engine without cookies", "Applying for a job and providing a resume", "Renting a car and showing a driver’s license", "Shopping online using incognito mode" ], "correct_answer": "Renting a car and showing a driver’s license" },
+                { "type": "multiple_choice", "question": "What does Helen Nissenbaum’s definition of privacy emphasize?", "options": [ "The right to be completely anonymous", "The appropriate flow of personal information", "The ability to avoid all forms of surveillance", "The protection of physical property" ], "correct_answer": "The appropriate flow of personal information" },
+                { "type": "multiple_choice", "question": "Which of the following is true regarding the expectation of privacy?", "options": [ "Expectations of privacy remain the same regardless of context", "People expect more privacy at home than in public places", "Privacy expectations are irrelevant in the digital age", "Everyone expects the same level of privacy in all situations" ], "correct_answer": "People expect more privacy at home than in public places" },
+                { "type": "multiple_choice", "question": "According to the text, what is one reason people voluntarily share personal  information?", "options": [ "To increase surveillance", "To win the trust of others", "To avoid technology altogether", "To ensure complete anonymity" ], "correct_answer": "To win the trust of others" },
+                { "type": "multiple_choice", "question": "Which of the following is an example of a public record?", "options": [ "Your credit card number", "Your email password", "Birth certificate", "Social media messages" ], "correct_answer": "Birth certificate" },
+                { "type": "multiple_choice", "question": "What is one benefit of maintaining public records?", "options": [ "Preventing all crimes", "Allowing companies to sell personal data freely", "Promoting transparency and accountability in government", "Eliminating the need for identification" ], "correct_answer": "Promoting transparency and accountability in government" },
+                { "type": "multiple_choice", "question": "Why might someone be concerned about RFID tags embedded in clothing?", "options": [ "They increase the cost of clothes", "They can be used to track individuals without their knowledge", "They prevent online shopping", "They require constant charging" ], "correct_answer": "They can be used to track individuals without their knowledge" },
+                { "type": "multiple_choice", "question": "What kind of information do loyalty programs typically collect?", "options": [ "Medical history", "Political opinions", "Purchasing habits", "Religious beliefs" ], "correct_answer": "Purchasing habits" },
+                { "type": "multiple_choice", "question": "What is the primary function of cookies in web Browse?", "options": [ "To delete browser history automatically", "To store user preferences and track online behavior", "To block all advertisements", "To encrypt all internet traffic" ], "correct_answer": "To store user preferences and track online behavior" },
+                { "type": "multiple_choice", "question": "Which of the following best describes Facebook tagging?", "options": [ "Automatically posting updates on your behalf", "Labeling a person in a photo to link it to their profile", "Blocking users from seeing your posts", "Sharing your location with friends" ], "correct_answer": "Labeling a person in a photo to link it to their profile" },
+                { "type": "multiple_choice", "question": "What concern was raised about Facebook’s automatic facial recognition  feature?", "options": [ "It increased the cost of using Facebook", "It allowed Facebook to sell user photos without consent", "It gathered facial data without user permission", "It reduced the number of friends users could have" ], "correct_answer": "It gathered facial data without user permission" },
+                { "type": "multiple_choice", "question": "Which of the following is NOT considered a public record?", "options": [ "Property deed", "Criminal conviction", "Credit card transaction", "Marriage license" ], "correct_answer": "Credit card transaction" },
+                { "type": "multiple_choice", "question": "What privacy risk is associated with mobile apps that request access to your  contacts?", "options": [ "They may reduce battery life", "They may share your contact list without your knowledge", "They always charge extra fees", "They prevent you from using other apps" ], "correct_answer": "They may share your contact list without your knowledge" },
+                { "type": "multiple_choice", "question": "Which law requires U.S. cell phone providers to provide Enhanced 911  (E911) services?", "options": [ "HIPAA", "COPPA", "FCC regulations", "GDPR" ], "correct_answer": "FCC regulations" },
+                { "type": "multiple_choice", "question": "What is one way cookies can be used against a user’s interests?", "options": [ "By improving website performance", "By increasing security features", "By building detailed behavioral profiles for targeted advertising", "By deleting outdated browser data" ], "correct_answer": "By building detailed behavioral profiles for targeted advertising" },
+                { "type": "multiple_choice", "question": "What happened in the case involving Social Intelligence Corporation and  employer background checks?", "options": [ "Employers were banned from checking social media", "The company faced criticism for collecting inappropriate personal data", "Employees received bonuses for good social media behavior", "Social media became illegal for job seekers" ], "correct_answer": "The company faced criticism for collecting inappropriate personal data" },
+                { "type": "multiple_choice", "question": "What is a major reason people voluntarily give up personal information?", "options": [ "To avoid technology entirely", "To gain access to services or products they want", "To reduce online security", "To hide from law enforcement" ], "correct_answer": "To gain access to services or products they want" },
+                { "type": "multiple_choice", "question": "What is a potential problem with automatic Facebook tagging?", "options": [ "It makes photos load slower", "It can lead to misidentification and embarrassment", "It limits the number of friends you can have", "It disables the ability to upload videos" ], "correct_answer": "It can lead to misidentification and embarrassment" },
+                { "type": "multiple_choice", "question": "What type of information is most likely to be found in a credit report?", "options": [ "Voting history", "Employment history", "Payment history and debt levels", "Daily exercise routine" ], "correct_answer": "Payment history and debt levels" },
+                { "type": "multiple_choice", "question": "What does the Fair and Accurate Credit Transactions Act require?", "options": [ "That banks offer free loans to everyone", "That consumers get a free copy of their credit report annually", "That employers check credit scores before hiring", "That all financial institutions close at 5 PM" ], "correct_answer": "That consumers get a free copy of their credit report annually" },
+                { "type": "multiple_choice", "question": "Which of the following is NOT a typical use of RFID tags?", "options": [ "Tracking inventory in stores", "Monitoring employee attendance", "Storing classified military secrets", "Managing supply chains" ], "correct_answer": "Storing classified military secrets" },
+                { "type": "multiple_choice", "question": "What is one ethical concern about using body scanners at airports?", "options": [ "They slow down travel too much", "They create unnecessary radiation", "They display images of passengers’ bodies", "They are too expensive to operate" ], "correct_answer": "They display images of passengers’ bodies" },
+                { "type": "multiple_choice", "question": "What did Facebook change in 2015 regarding app access to user data?", "options": [ "Apps could no longer access any user data", "Apps could access data from users' friends without their consent", "Apps could no longer mine data from the friends of app users", "Facebook stopped offering apps altogether" ], "correct_answer": "Apps could no longer mine data from the friends of app users" },
+                { "type": "multiple_choice", "question": "What happened in the Cambridge Analytica scandal?", "options": [ "Facebook shut down permanently", "Personal data of millions of Facebook users was improperly accessed and used  for political profiling", "Facebook introduced a new encryption standard", "Mark Zuckerberg resigned as CEO" ], "correct_answer": "Personal data of millions of Facebook users was improperly accessed and used  for political profiling" },
+                { "type": "multiple_choice", "question": "What is one advantage of consolidating medical records into a single  database?", "options": [ "It eliminates all privacy risks", "It improves coordination of patient care among different providers", "It prevents patients from changing doctors", "It reduces the number of hospitals needed" ], "correct_answer": "It improves coordination of patient care among different providers" },
+                { "type": "multiple_choice", "question": "What is the main risk associated with releasing “anonymized” datasets?", "options": [ "They are always incomplete", "They cannot be shared across departments", "Individuals can sometimes be re-identified through data correlation", "They are too expensive to store" ], "correct_answer": "Individuals can sometimes be re-identified through data correlation" },
+                { "type": "multiple_choice", "question": "What does Helen Nissenbaum’s theory emphasize about privacy?", "options": [ "Complete anonymity is always necessary", "People should never share any personal information", "Privacy depends on the appropriate flow of information in context", "Privacy is irrelevant in the digital age" ], "correct_answer": "Privacy depends on the appropriate flow of information in context" },
+                { "type": "multiple_choice", "question": "What is one reason users might not fully understand how their data is being  used by private companies?", "options": [ "Data policies are written clearly and concisely", "Companies rarely collect personal data", "Terms of service agreements are long, complex, and difficult to understand", "Users are legally required to accept terms without reading them" ], "correct_answer": "Terms of service agreements are long, complex, and difficult to understand" },
+                { "type": "multiple_choice", "question": "What is an opt-in policy in the context of data sharing?", "options": [ "Users must actively agree before their data is collected or shared", "Users’ data is shared automatically unless they say otherwise", "Only children must opt in; adults are assumed to agree", "Data is only collected after a court order" ], "correct_answer": "Users must actively agree before their data is collected or shared" },
+                { "type": "multiple_choice", "question": "Which of the following best defines \"hacking\"?", "options": [ "Writing open-source software", "Ethical testing of security flaws", "Unauthorized access to computer systems", "Installing firewalls and antivirus programs" ], "correct_answer": "Unauthorized access to computer systems" },
+                { "type": "multiple_choice", "question": "Which law criminalizes transmitting code that causes damage to a computer  system in the U.S.?", "options": [ "HIPAA", "GDPR", "Computer Fraud and Abuse Act", "CAN-SPAM Act" ], "correct_answer": "Computer Fraud and Abuse Act" },
+                { "type": "multiple_choice", "question": "What is a virus?", "options": [ "A self-replicating program that spreads over networks", "A program that disguises itself as legitimate software", "A piece of malicious code that attaches itself to other programs", "Software that automatically deletes system files" ], "correct_answer": "A piece of malicious code that attaches itself to other programs" },
+                { "type": "multiple_choice", "question": "Which of the following is NOT a type of malware?", "options": [ "Worm", "Firewall", "Ransomware", "Rootkit" ], "correct_answer": "Firewall" },
+                { "type": "multiple_choice", "question": "What is the primary difference between a virus and a worm?", "options": [ "A worm can replicate itself without user action", "A virus is always more dangerous", "A worm requires a host file to spread", "A virus cannot be removed with antivirus software" ], "correct_answer": "A worm can replicate itself without user action" },
+                { "type": "multiple_choice", "question": "What was the first major worm to spread via the Internet?", "options": [ "Sasser", "Conficker", "Morris Worm", "Zeus" ], "correct_answer": "Morris Worm" },
+                { "type": "multiple_choice", "question": "Which of the following best describes phishing?", "options": [ "A denial-of-service attack", "A method of guessing passwords using software", "Deceiving users into revealing personal information", "Infecting a system with a virus through an email" ], "correct_answer": "Deceiving users into revealing personal information" },
+                { "type": "multiple_choice", "question": "What is ransomware?", "options": [ "Software that slows down your computer", "Software that encrypts files and demands payment for decryption", "Software that monitors keystrokes secretly", "Software that sends spam emails" ], "correct_answer": "Software that encrypts files and demands payment for decryption" },
+                { "type": "multiple_choice", "question": "Which of the following is a common method used by hackers to obtain login  credentials?", "options": [ "Dictionary attacks", "Data encryption", "Public key infrastructure", "Two-factor authentication" ], "correct_answer": "Dictionary attacks" },
+                { "type": "multiple_choice", "question": "What is a Trojan horse in the context of computer security?", "options": [ "A tool used to fix bugs in software", "A program that appears legitimate but hides malicious functionality", "A hardware device used to protect against viruses", "A protocol used to encrypt web traffic" ], "correct_answer": "A program that appears legitimate but hides malicious functionality" },
+                { "type": "multiple_choice", "question": "Which of the following is a characteristic of spyware?", "options": [ "It improves system performance", "It displays unwanted advertisements", "It secretly collects information about a user’s activities", "It prevents phishing attacks" ], "correct_answer": "It secretly collects information about a user’s activities" },
+                { "type": "multiple_choice", "question": "What is SQL injection?", "options": [ "A way to speed up database queries", "A technique used to delete databases permanently", "An attack that inserts malicious SQL commands into input fields", "A method of encrypting database entries" ], "correct_answer": "An attack that inserts malicious SQL commands into input fields" },
+                { "type": "multiple_choice", "question": "What is spear phishing?", "options": [ "Phishing aimed at specific individuals or organizations", "Phishing conducted over phone calls", "Phishing that uses physical mail instead of email", "Phishing that affects only mobile devices" ], "correct_answer": "Phishing aimed at specific individuals or organizations" },
+                { "type": "multiple_choice", "question": "What is a rootkit?", "options": [ "A program that removes all viruses from a system", "A tool used exclusively by ethical hackers", "Malware designed to hide its presence and allow remote access", "A type of firewall used in government agencies" ], "correct_answer": "Malware designed to hide its presence and allow remote access" },
+                { "type": "multiple_choice", "question": "Which of the following is a common consequence of a distributed denial-of- service (DDoS) attack?", "options": [ "Increased system performance", "Loss of access to a website or service", "Permanent deletion of user data", "Improved network security" ], "correct_answer": "Loss of access to a website or service" },
+                { "type": "multiple_choice", "question": "What is the purpose of a drive-by download?", "options": [ "To update software automatically", "To install malware without the user’s knowledge when visiting a compromised  site", "To increase browser speed", "To improve search engine rankings" ], "correct_answer": "To install malware without the user’s knowledge when visiting a compromised  site" },
+                { "type": "multiple_choice", "question": "Which of the following is NOT a recommended practice for improving  online security?", "options": [ "Using strong, unique passwords for each account", "Keeping software updated with the latest patches", "Clicking on links in unsolicited emails", "Enabling two-factor authentication" ], "correct_answer": "Clicking on links in unsolicited emails" },
+                { "type": "multiple_choice", "question": "Which of the following is a real-world example of a large-scale cyberattack?", "options": [ "The creation of the Linux operating system", "The release of the Firefox web browser", "The Estonia cyberattacks of 2007", "The invention of the World Wide Web" ], "correct_answer": "The Estonia cyberattacks of 2007" },
+                { "type": "multiple_choice", "question": "What is cross-site scripting (XSS)?", "options": [ "A method to improve website design", "A technique that injects malicious scripts into web pages viewed by others", "A type of firewall configuration", "A way to compress web page data" ], "correct_answer": "A technique that injects malicious scripts into web pages viewed by others" },
+                { "type": "multiple_choice", "question": "Which of the following best describes the ethical evaluation of the Morris  Worm?", "options": [ "It was fully intentional and meant to cause harm", "It was a harmless experiment that improved internet security", "It was an accidental mistake that exposed serious security flaws", "It was a government-approved test of network resilience" ], "correct_answer": "It was an accidental mistake that exposed serious security flaws" },
+                { "type": "multiple_choice", "question": "What is the main risk associated with “Bring Your Own Device” (BYOD)  policies in companies?", "options": [ "Devices may have outdated hardware", "Personal devices may introduce malware or weaken corporate network security", "Employees will prefer Android over iOS", "Employees will use too much data" ], "correct_answer": "Personal devices may introduce malware or weaken corporate network security" },
+                { "type": "multiple_choice", "question": "What is the role of anti-malware software?", "options": [ "To speed up computer performance", "To monitor employee productivity", "To detect and remove malicious software like viruses and Trojans", "To back up all user data automatically" ], "correct_answer": "To detect and remove malicious software like viruses and Trojans" },
+                { "type": "multiple_choice", "question": "What is a password manager?", "options": [ "A program that resets all passwords to default", "A tool that stores and generates secure passwords for users", "A feature that disables password requirements", "A program that broadcasts passwords over the network" ], "correct_answer": "A tool that stores and generates secure passwords for users" },
+                { "type": "multiple_choice", "question": "What does the term “security patch” refer to?", "options": [ "A new version of an operating system", "A small update designed to fix vulnerabilities in software", "A physical sticker placed on a computer to indicate it is secure", "A type of biometric login system" ], "correct_answer": "A small update designed to fix vulnerabilities in software" },
+                { "type": "multiple_choice", "question": "Why is it dangerous to use public Wi-Fi networks without additional  security measures?", "options": [ "They always slow down your internet speed", "They make your device incompatible with some websites", "Attackers can potentially intercept your data transmissions", "They require you to change your passwords every day" ], "correct_answer": "Attackers can potentially intercept your data transmissions" },
+                { "type": "multiple_choice", "question": "What is a denial-of-service (DoS) attack primarily designed to do?", "options": [ "Steal user passwords", "Delete all data from a server", "Prevent legitimate users from accessing a service", "Monitor network traffic secretly" ], "correct_answer": "Prevent legitimate users from accessing a service" },
+                { "type": "multiple_choice", "question": "Which of the following best defines a distributed denial-of-service (DDoS)  attack?", "options": [ "An attack that targets only government servers", "An attack launched from multiple compromised systems simultaneously", "An attack that always involves ransomware", "An attack that occurs only on mobile devices" ], "correct_answer": "An attack launched from multiple compromised systems simultaneously" },
+                { "type": "multiple_choice", "question": "What role did the Mirai botnet play in major cyberattacks?", "options": [ "It was used to mine cryptocurrency", "It launched DDoS attacks using IoT devices", "It created fake social media profiles", "It spread phishing emails globally" ], "correct_answer": "It launched DDoS attacks using IoT devices" },
+                { "type": "multiple_choice", "question": "What is the main purpose of anti-malware software?", "options": [ "To speed up computer performance", "To monitor employee productivity", "To detect and remove malicious software like viruses and Trojans", "To back up all user data automatically" ], "correct_answer": "To detect and remove malicious software like viruses and Trojans" },
+                { "type": "multiple_choice", "question": "What is the difference between a virus and a worm?", "options": [ "A worm can replicate itself without user action", "A virus is always more dangerous", "A worm requires a host file to spread", "A virus cannot be removed with antivirus software" ], "correct_answer": "A worm can replicate itself without user action" },
+                { "type": "multiple_choice", "question": "What is Helen Nissenbaum’s definition of privacy centered around?", "options": [ "Complete anonymity", "Absolute secrecy", "The appropriate flow of information in context", "Total transparency" ], "correct_answer": "The appropriate flow of information in context" }
+            ]
+        }
+    </script>
+
+    <script>
+        const app = document.getElementById('app');
+        const questionsDataEl = document.getElementById('questions-data');
+        
+        const quizState = {
+            questions: [],
+            currentQuestionIndex: 0,
+            score: 0,
+            status: 'loading', // loading, start, active, finished
+            selectedAnswer: null,
+            answerChecked: false,
+        };
+
+        const TOPICS = {
+            "computing": "مقدمة في الحوسبة", "calculator": "الحاسبات الميكانيكية", "punched card": "البطاقات المثقبة",
+            "microprocessor": "المعالجات الدقيقة", "ethics": "مقدمة في الأخلاقيات", "relativism": "النسبية الأخلاقية",
+            "networked": "الاتصالات الشبكية", "spam": "البريد المزعج", "mobile application": "تطبيقات الجوال",
+            "world wide web": "الشبكة العنكبوتية العالمية", "filtering": "ترشيح الويب", "cipa": "قانون حماية الأطفال على الإنترنت",
+            "intellectual property": "الملكية الفكرية", "locke": "نظرية جون لوك", "trademark": "العلامات التجارية",
+            "patents": "براءات الاختراع", "copyright": "حقوق النشر", "software": "البرمجيات", "oracle v. google": "قضية أوراكل ضد جوجل",
+            "open-source": "البرمجيات مفتوحة المصدر", "gnu": "مشروع جنو", "linux": "لينكس", "privacy": "الخصوصية", "trust": "الثقة",
+            "public record": "السجلات العامة", "rfid": "بطاقات RFID", "cookies": "ملفات تعريف الارتباط", "hacking": "القرصنة",
+            "malware": "البرمجيات الخبيثة", "morris worm": "دودة موريس", "phishing": "التصيد الاحتيالي",
+            "sql injection": "حقن SQL", "dos": "هجمات حجب الخدمة", "iot": "إنترنت الأشياء"
+        };
+        
+        // ---- Main App Logic ----
+        function init() {
+            loadQuestions();
+            render();
+            // Event delegation for the entire app
+            app.addEventListener('click', handleAppClick);
+        }
+
+        function render() {
+            switch (quizState.status) {
+                case 'start':
+                    renderStartScreen();
+                    break;
+                case 'active':
+                    renderQuestionScreen();
+                    break;
+                case 'finished':
+                    renderResultScreen();
+                    break;
+                default:
+                    renderLoadingScreen();
+            }
+        }
+
+        function handleAppClick(e) {
+            if (e.target.matches('[data-action="start"]')) {
+                quizState.status = 'active';
+                render();
+            }
+            else if (e.target.matches('[data-action="select-option"]')) {
+                if (quizState.answerChecked) return;
+                quizState.selectedAnswer = e.target.dataset.option;
+                // Re-render to show selection
+                renderQuestionScreen();
+            }
+            else if (e.target.matches('[data-action="submit"]')) {
+                if (quizState.selectedAnswer === null && getCurrentQuestion().type === 'multiple_choice') return;
+                quizState.answerChecked = true;
+                if (getCurrentQuestion().type === 'multiple_choice' && quizState.selectedAnswer === getCurrentQuestion().correct_answer) {
+                    quizState.score++;
+                }
+                renderQuestionScreen();
+            }
+            else if (e.target.matches('[data-action="next"]')) {
+                if (quizState.currentQuestionIndex < quizState.questions.length - 1) {
+                    quizState.currentQuestionIndex++;
+                    quizState.selectedAnswer = null;
+                    quizState.answerChecked = false;
+                    renderQuestionScreen();
+                } else {
+                    quizState.status = 'finished';
+                    render();
+                }
+            }
+            else if (e.target.matches('[data-action="restart"]')) {
+                quizState.currentQuestionIndex = 0;
+                quizState.score = 0;
+                quizState.selectedAnswer = null;
+                quizState.answerChecked = false;
+                quizState.status = 'start';
+                render();
+            }
+        }
+        
+        // ---- Data Loading and Processing ----
+        function loadQuestions() {
+            try {
+                const data = JSON.parse(questionsDataEl.textContent);
+                const questionTexts = new Set();
+                
+                quizState.questions = data.questions
+                    .map(cleanQuestionData)
+                    .filter(q => {
+                        if (!q || !q.question) return false;
+                        const isUnique = !questionTexts.has(q.question);
+                        if(isUnique) questionTexts.add(q.question);
+                        return isUnique;
+                    });
+                
+                quizState.status = 'start';
+            } catch (error) {
+                app.innerHTML = `<div class="screen header"><p>خطأ فادح في تحميل بيانات الأسئلة. الرجاء التأكد من صحة التنسيق.</p></div>`;
+                console.error("JSON Parse Error:", error);
+            }
+        }
+
+        function cleanQuestionData(q) {
+            const cleanText = (text) => text ? text.replace(/Ethics for the Information Age.*?\{\d+\}/g, '').replace(/Multiple-Choice Questions/gi, '').replace(/Short Answer Questions/gi, '').replace(/^\d+\.\s*Question:\s*/, '').trim() : '';
+            
+            const questionText = cleanText(q.question);
+            let topic = "موضوع عام";
+            for(const key in TOPICS) {
+                if (questionText.toLowerCase().includes(key)) {
+                    topic = TOPICS[key];
+                    break;
+                }
+            }
+
+            return {
+                ...q,
+                question: questionText,
+                topic: topic,
+                answer: cleanText(q.answer),
+                correct_answer: cleanText(q.correct_answer),
+                options: q.options ? q.options.map(cleanText) : null
+            };
+        }
+
+        // ---- Rendering Functions ----
+        function renderLoadingScreen() {
+            app.innerHTML = `<div class="screen header"><p>جارٍ التحضير...</p></div>`;
+        }
+
+        function renderStartScreen() {
+            app.innerHTML = `
+                <div class="screen">
+                    <div class="header">
+                        <h1>منصة اختبار</h1>
+                        <p>أخلاقيات عصر المعلومات - إعداد د. حيدر كريم</p>
+                    </div>
+                    <div class="controls">
+                        <button class="btn" data-action="start">ابدأ الاختبار</button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderResultScreen() {
+            const mcqCount = quizState.questions.filter(q => q.type === 'multiple_choice').length;
+            const percentage = mcqCount > 0 ? Math.round((quizState.score / mcqCount) * 100) : 0;
+            let feedback = '';
+            if (percentage >= 90) feedback = 'أداء مذهل! أنت خبير في هذا المجال.';
+            else if (percentage >= 75) feedback = 'نتيجة ممتازة! لديك معرفة قوية بالموضوع.';
+            else if (percentage >= 50) feedback = 'جيد جداً، لكن هناك مجال للتحسين.';
+            else feedback = 'تحتاج إلى المزيد من المراجعة. لا تستسلم!';
+            
+            app.innerHTML = `
+                <div class="screen results-summary">
+                    <h2>انتهى الاختبار!</h2>
+                    <p class="score-text">نتيجتك في أسئلة الاختيار المتعدد هي ${quizState.score} من ${mcqCount}</p>
+                    <p class="feedback-text">${feedback}</p>
+                    <div class="controls">
+                        <button class="btn" data-action="restart">إعادة الاختبار</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderQuestionScreen() {
+            const question = getCurrentQuestion();
+            const progress = (quizState.currentQuestionIndex / quizState.questions.length) * 100;
+
+            const optionsHTML = question.type === 'multiple_choice' 
+                ? `<ul class="options-list">${question.options.map(opt => renderOption(opt)).join('')}</ul>`
+                : `<div class="short-answer-display"><h4>الإجابة النموذجية:</h4><p>${question.answer}</p></div>`;
+            
+            const buttonHTML = quizState.answerChecked || question.type === 'short_answer'
+                ? `<button class="btn" data-action="next">التالي</button>`
+                : `<button class="btn" data-action="submit" ${quizState.selectedAnswer === null ? 'disabled' : ''}>تأكيد الإجابة</button>`;
+
+            app.innerHTML = `
+                <div class="screen">
+                    <div class="progress-bar-container"><div class="progress-bar" style="width: ${progress}%;"></div></div>
+                    <div class="question-meta">
+                        <span class="question-topic">${question.topic}</span>
+                        <span>السؤال ${quizState.currentQuestionIndex + 1} / ${quizState.questions.length}</span>
+                    </div>
+                    <h2 class="question-text">${question.question}</h2>
+                    ${optionsHTML}
+                    <div class="controls">${buttonHTML}</div>
+                </div>
+            `;
+        }
+
+        function renderOption(optionText) {
+            const isSelected = quizState.selectedAnswer === optionText;
+            let className = 'option-item';
+            let feedbackIcon = '';
+
+            if (isSelected) className += ' selected';
+
+            if (quizState.answerChecked) {
+                const isCorrect = optionText === getCurrentQuestion().correct_answer;
+                if(isCorrect) {
+                    className += ' correct';
+                    feedbackIcon = `<span class="option-feedback-icon" style="color: var(--correct-color);">✔</span>`;
+                } else if (isSelected) {
+                    className += ' wrong';
+                    feedbackIcon = `<span class="option-feedback-icon" style="color: var(--wrong-color);">✖</span>`;
+                }
+            }
+            
+            return `
+                <li class="${className}" data-action="select-option" data-option="${optionText}">
+                    <span>${optionText}</span>
+                    ${feedbackIcon}
+                </li>`;
+        }
+
+        // ---- Helper Functions ----
+        const getCurrentQuestion = () => quizState.questions[quizState.currentQuestionIndex];
+        
+        // Start the application
+        init();
+
+    </script>
+</body>
+</html>
